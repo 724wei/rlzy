@@ -35,6 +35,13 @@ module.exports = {
     overlay: {
       warnings: false,
       errors: true
+    },
+    // 反向代理
+    proxy: {
+      '/api': { // 请求路径中包含的请求路径
+        target: 'http://42.192.129.12:3001',
+        changeOrigin: true
+      }
     }
   },
   configureWebpack: {
