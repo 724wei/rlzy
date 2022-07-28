@@ -14,6 +14,7 @@
 <script>
 import { Navbar, Sidebar, AppMain } from './components'
 import ResizeMixin from './mixin/ResizeHandler'
+// import { mapActions } from 'vuex'
 
 export default {
   name: 'Layout',
@@ -42,7 +43,12 @@ export default {
       }
     }
   },
+  created() {
+    // 获取用户信息
+    // this.getUser()
+  },
   methods: {
+    // ...mapActions('user', ['getUser']),
     handleClickOutside() {
       this.$store.dispatch('app/closeSideBar', { withoutAnimation: false })
     }

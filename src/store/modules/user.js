@@ -1,13 +1,18 @@
 // 状态
 import { getToken, removeToken, setToken } from '@/utils/auth'
-import { login } from '@/api/user'
+import { getUserDetailById, getUserInfo, login } from '@/api/user'
 
 const state = {
-  token: getToken()
+  token: getToken(),
+  userinfo: {}
 }
 // 修改状态
 const mutations = {
-// 修改token的方法
+//  修改用户信息
+  setUserInfo(state, userinfo) {
+    state.userinfo = userinfo
+  },
+  // 修改token的方法
   setToken(state, token) {
     // 存储到vuex中
     state.token = token
@@ -33,6 +38,18 @@ const actions = {
       console.log(e)
       return Promise.reject('error')
     }
+  },
+  // 获取用户信息
+  async getUser(context) {
+    const res = await getUserInfo()
+    const baseInfo = await getUserDetailById(res.userId)
+    // console.log(res)
+    context.commit('setUserInfo', { ...res, ...baseInfo })
+  },
+  //  退出登录
+  logOut(context) {
+    context.commit('removeToken')
+    context.commit('setUserInfo', {})
   }
 }
 export default {

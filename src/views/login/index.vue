@@ -56,6 +56,7 @@
 
 <script>
 import { mapActions } from 'vuex'
+import { setTime } from '@/utils/auth'
 
 export default {
   name: 'Login',
@@ -88,6 +89,7 @@ export default {
       immediate: true
     }
   },
+
   methods: {
     ...mapActions('user', ['login']),
     showPwd() {
@@ -106,6 +108,7 @@ export default {
         await this.$refs.loginForm.validate()
         this.loading = true
         await this.login(this.loginForm)
+        setTime()
         this.$router.push({ path: this.redirect || '/' })
         this.loading = false
       } catch (e) {
