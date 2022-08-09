@@ -44,7 +44,7 @@ export default {
     }
   },
   data() {
-    // 检验部门名称是否有重复的函数
+    // 检验部门名称是否有重复的 函数
     const checkName = async(rules, value) => {
       const { depts } = await getDepartments()
       let currentChildren = null

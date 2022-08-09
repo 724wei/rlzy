@@ -1,6 +1,7 @@
 // 状态
 import { getToken, removeToken, setToken } from '@/utils/auth'
 import { getUserDetailById, getUserInfo, login } from '@/api/user'
+import { resetRouter } from '@/router'
 
 const state = {
   token: getToken(),
@@ -45,11 +46,19 @@ const actions = {
     const baseInfo = await getUserDetailById(res.userId)
     // console.log(res)
     context.commit('setUserInfo', { ...res, ...baseInfo })
+    return {
+      ...baseInfo,
+      ...res
+    }
   },
   //  退出登录
   logOut(context) {
     context.commit('removeToken')
     context.commit('setUserInfo', {})
+    // 退出的时候清空路由信息，防止喜爱登录时显示上次登录用户的信息
+    resetRouter()
+    // 通过设置{root:true}将当前context转换为根节点的context，方便不同的模块之间互相调用方法
+    context.commit('premission/setRoutes', [], { root: true })
   }
 }
 export default {

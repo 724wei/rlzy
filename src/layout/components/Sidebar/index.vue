@@ -31,7 +31,9 @@ export default {
       'sidebar'
     ]),
     routes() {
-      return this.$router.options.routes
+      // return this.$router.options.routes
+      // 使用动态获取到的用户权限来渲染目录
+      return this.$store.getters.routes
     },
     activeMenu() {
       const route = this.$route

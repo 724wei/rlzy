@@ -2,7 +2,7 @@
   <el-card class="box-card">
     <el-tabs v-model="activeName" @tab-click="handleClick">
       <el-tab-pane label="角色管理" name="first">
-        <el-button icon="el-icon-plus" size="mini" type="primary">新增角色</el-button>
+        <el-button icon="el-icon-plus" size="mini" type="primary" @click="isShowEdit=true">新增角色</el-button>
         <el-table :data="list">
           <el-table-column
             type="index"
@@ -20,8 +20,8 @@
           />
           <el-table-column label="操作">
             <template v-slot="{row}">
-              <el-button type="success" size="small">分配权限</el-button>
-              <el-button type="primary" size="small">编辑</el-button>
+              <el-button type="success" size="small" @click="assignPrem(row.id)">分配权限</el-button>
+              <el-button type="primary" size="small" @click="editRole(row.id)">编辑</el-button>
               <el-button type="danger" size="small" @click="del(row.id)">删除</el-button>
             </template>
           </el-table-column>
@@ -58,8 +58,8 @@
         </el-form>
       </el-tab-pane>
     </el-tabs>
-    <el-dialog title="编辑角色" :visible="isShowEdit">
-      <el-form :rules="editRules" label-width="120px">
+    <el-dialog :title="`${editForm.id?'编辑':'新增'}角色`" :visible="isShowEdit" @close="close">
+      <el-form ref="editForm" :rules="editRules" label-width="120px">
         <el-form-item label="角色" prop="name">
           <el-input v-model="editForm.name" />
         </el-form-item>
@@ -67,23 +67,49 @@
           <el-input v-model="editForm.description" />
         </el-form-item>
       </el-form>
+      <template>
+        <el-button @click="close">取消</el-button>
+        <el-button type="primary" @click="confirmEdit">确定</el-button>
+      </template>
+    </el-dialog>
+    <el-dialog title="分配权限" :visible.sync="showAssignDialog" @close="closePremission">
+      <el-tree
+        ref="treeRef"
+        :default-checked-keys="checkList"
+        :data="premissionList"
+        :props="props"
+        default-expand-all
+        show-checkbox
+        check-strictly
+        node-key="id"
+      />
+      <template #footer>
+        <el-button>取消</el-button>
+        <el-button type="primary" @click="permissionOK">确定</el-button>
+      </template>
     </el-dialog>
   </el-card>
 </template>
 <script>
-import { deleteRole, getCompanyInfo, getRoleList } from '@/api/setting'
+import { addRole, deleteRole, getCompanyInfo, getRoleDetail, getRoleList, updateRole } from '@/api/setting'
+import { assignPerm, getPermissionList } from '@/api/permission'
+import { transListTree } from '@/utils'
 export default {
   data() {
     return {
+      premissionList: [],
+      checkList: [],
+      props: { label: 'name' },
+      showAssignDialog: false,
       activeName: 'first',
-      isShowEdit: true,
+      isShowEdit: false,
       list: [],
       editForm: {
         name: '',
         description: ''
       },
       editRules: {
-        name: [{ required: true, message: '不能为空' }]
+        name: [{ required: true, message: '不能为空', trigger: 'blur' }]
       },
       page: {
         // 放置页码及相关数据
@@ -91,7 +117,8 @@ export default {
         pagesize: 2,
         total: 0 // 记录总数
       },
-      formDate: {}
+      formDate: {},
+      currentRoleId: null
     }
   },
   created() {
@@ -99,6 +126,28 @@ export default {
     this.getCompanyInfo()
   },
   methods: {
+    async permissionOK() {
+      const checkedKeys = this.$refs.treeRef.getCheckedKeys()
+      await assignPerm({
+        id: this.currentRoleId,
+        permIds: checkedKeys
+      })
+      this.$message.success('修改权限成功')
+      this.closePremission()
+    },
+    closePremission() {
+      this.showAssignDialog = false
+      this.checkedKeys = []
+    },
+    // 点击分配权限
+    async assignPrem(id) {
+      this.currentRoleId = id
+      this.showAssignDialog = true
+      this.premissionList = transListTree(await getPermissionList(id), '0')
+      const { permIds } = await getRoleDetail(id)
+      console.log(permIds)
+      this.checkList = permIds
+    },
     handleClick(tab, event) {
       console.log(tab, event)
     },
@@ -126,6 +175,30 @@ export default {
       }
       this.$message.success('删除成功')
       await this.getConfirmList()
+    },
+    //  编辑角色信息
+    async editRole(id) {
+      this.isShowEdit = true
+      this.editForm = await getRoleDetail(id)
+    },
+    //  关闭弹层
+    close() {
+      this.isShowEdit = false
+      this.$refs.editForm.resetFields()
+      this.editForm = {
+        name: '',
+        description: ''
+      }
+    },
+    //  确认按钮
+    async confirmEdit() {
+      if (this.editForm.id) {
+        await updateRole(this.editForm)
+      } else {
+        await addRole(this.editForm)
+      }
+      this.$message.success('成功')
+      this.close()
     }
   }
 }
